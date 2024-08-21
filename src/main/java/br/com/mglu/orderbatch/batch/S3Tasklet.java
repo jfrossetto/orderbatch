@@ -38,9 +38,8 @@ public class S3Tasklet implements Tasklet {
         log.info(">>> orderTasklet");
         ListObjectsV2Result s3Objects = s3Client.getListObjects(BUCKET_NAME, "data");
         if (Objects.isNull(s3Objects) || CollectionUtils.isNullOrEmpty(s3Objects.getObjectSummaries())) {
-            log.warn("without files to process - waiting");
-            Thread.sleep(DELAY);
-            return RepeatStatus.CONTINUABLE;
+            log.warn("without files to process");
+            return RepeatStatus.FINISHED;
         }
         S3Object s3Object = s3Client.getS3Object(s3Objects.getObjectSummaries().getFirst());
         processFile(s3Object);

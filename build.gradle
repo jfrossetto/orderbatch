@@ -18,19 +18,19 @@ repositories {
 }
 
 dependencies {
+
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+
+	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.flywaydb:flyway-core:10.14.0'
+	runtimeOnly 'org.flywaydb:flyway-database-postgresql:10.14.0'
 
 	implementation 'com.amazonaws:aws-java-sdk-core:1.12.729'
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.729'
 
-	//		<version>1.11.1034</version>
-	//		<version>1.11.1034</version>
-
-	//implementation 'org.springframework.boot:spring-boot-starter-log4j2'
-	//runtimeOnly 'com.vlkan.log4j2:log4j2-logstash-layout:1.0.5'
-
 	// H2
-	runtimeOnly 'org.hsqldb:hsqldb'
+	// runtimeOnly 'org.hsqldb:hsqldb'
 
 	// Lombok
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
