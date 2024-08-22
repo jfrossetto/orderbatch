@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 @Component
 @RequiredArgsConstructor
@@ -24,8 +25,18 @@ public class AwsS3Client {
         return getS3Object(summary.getBucketName(), summary.getKey());
     }
 
-    public void writeFileToS3(String bucketName, String fileName, String fileContent) throws IOException {
-        amazonS3Client.putObject(bucketName, fileName, fileContent);
+    public void writeFileToS3(S3Object originalS3, String folder, InputStream fileContent, int length) throws IOException {
+        String key = folder
+                .concat(PATH_SEPARATOR)
+                .concat(getKeyWithoutFolder(originalS3.getKey()));
+        ObjectMetadata metadata = originalS3.getObjectMetadata();
+        metadata.setContentLength(length);
+        PutObjectRequest request = new PutObjectRequest(
+                originalS3.getBucketName(),
+                key,
+                fileContent,
+                metadata);
+        amazonS3Client.putObject(request);
     }
 
     public ListObjectsV2Result getListObjects(String bucketName, String keyPrefix) {
