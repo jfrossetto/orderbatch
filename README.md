@@ -27,9 +27,13 @@
   
 ### Cobertura dos testes:
 
+* pluging do jacoco para gradle, configurado com 80% cobertura (apenas para as classes principais)
+
 ![alt text](https://github.com/jfrossetto/orderbatch/blob/master/coverage.png?raw=true)
 
 ### Board do Projeto:
+ 
+* Para controle das atividades criei um projeto no jira bem simples, mas para acompanhar as task. Algumas continuaram em aberto, pois pretendo aproveitar o projeto para outros estudos. O Spring Batch era algo que ainda não tinha usado.
 
-![alt text](https://github.com/jfrossetto/orderbatch/blob/master/jira.png?raw=true)
+* ![alt text](https://github.com/jfrossetto/orderbatch/blob/master/jira.png?raw=true)
 
