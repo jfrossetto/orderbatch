@@ -1,0 +1,88 @@
+version: '3.7'
+
+services:
+
+  dnsmasq:
+    image: strm/dnsmasq
+    volumes:
+      - './dnsmasq.conf:/etc/dnsmasq.conf'
+    cap_add:
+      - NET_ADMIN
+    networks:
+      ls:
+        ipv4_address: 10.0.2.20
+        
+  dbdev:
+    image: postgres:12.7-alpine
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: dbdev
+      TZ: America/Sao_Paulo
+      PGTZ: America/Sao_Paulo
+    container_name: dbdev
+    ports:
+      - 5432:5432
+    dns:
+      - 10.0.2.20      
+    networks:
+      - ls
+    volumes:
+      - ~/docker-volumes/postgresql/dbdev:/var/lib/postgresql/data
+      
+  localstack:
+    container_name: localstack-main
+    image: localstack/localstack:s3-latest
+    ports:
+      - 4566:4566
+    environment:
+      - DEBUG=1
+    volumes:
+      - ~/docker-volumes/localstack/volume:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      ls:
+        ipv4_address: 10.0.2.19
+      
+  orderbatch:
+    image: jfrossetto/orderbatch:001
+    container_name: orderbatch
+    depends_on:
+      - localstack
+      - dbdev
+    environment:
+      DB_SERVER: dbdev
+      DB_PORT: 5432
+      S3_URL: s3.localhost.localstack.cloud:4566
+      ACCESS_KEY: test
+      SECRET_KEY: test
+    networks:
+      - ls
+    dns:
+      - 10.0.2.20      
+      
+  orderapi:
+    image: jfrossetto/orderapi:001
+    container_name: orderapi
+    depends_on:
+      - localstack
+      - dbdev
+    environment:
+      DB_SERVER: dbdev
+      DB_PORT: 5432
+      S3_URL: https://s3.localhost.localstack.cloud:4566
+      ACCESS_KEY: test
+      SECRET_KEY: test
+    ports:
+      - 8080:8080
+    networks:
+      - ls
+    dns:
+      - 10.0.2.20      
+
+networks:
+  ls:
+   ipam:
+      config:
+        - subnet: 10.0.2.0/24  
+
