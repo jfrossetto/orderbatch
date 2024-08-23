@@ -59,6 +59,25 @@ services:
       - ls
     dns:
       - 10.0.2.20      
+      
+  orderapi:
+    image: jfrossetto/orderapi:latest
+    container_name: orderapi
+    depends_on:
+      - localstack
+      - dbdev
+    environment:
+      DB_SERVER: dbdev
+      DB_PORT: 5432
+      S3_URL: https://s3.localhost.localstack.cloud:4566
+      ACCESS_KEY: test
+      SECRET_KEY: test
+    ports:
+      - 8080:8080
+    networks:
+      - ls
+    dns:
+      - 10.0.2.20      
 
 networks:
   ls:
