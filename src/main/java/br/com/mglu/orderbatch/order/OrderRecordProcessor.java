@@ -56,7 +56,7 @@ public class OrderRecordProcessor implements ITextProcessor {
         List<Integer> notInserted = new ArrayList<>();
         for (int index = 0; index < orderRecords.size(); index++) {
             OrderRecord orderRecord = orderRecords.get(index);
-            String orderProductId = orderProductKey.apply(orderRecord.orderDate(), orderRecord.productId());
+            String orderProductId = orderProductKey.apply(orderRecord.orderId(), orderRecord.productId());
             if(orderProducts.containsKey(orderProductId)) {
                 log.warn(" {} {} duplicated ", orderRecord.orderId(), orderRecord.productId());
                 notInserted.add(index);

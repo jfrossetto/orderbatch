@@ -27,6 +27,7 @@ import java.util.Objects;
 public class S3Tasklet implements Tasklet {
 
     private static final String BUCKET_NAME = "mglu-orders";
+    private static final String NAME_PREFIX = "data_";
     private static final String SERVICE_SUFFIX = "Processor";
     private static final String ERROR_FOLDER = "error";
     private static final String PROCESSING_FOLDER = "processing";
@@ -39,7 +40,7 @@ public class S3Tasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
         log.info(">>> orderTasklet");
-        ListObjectsV2Result s3Objects = s3Client.getListObjects(BUCKET_NAME, "data");
+        ListObjectsV2Result s3Objects = s3Client.getListObjects(BUCKET_NAME, NAME_PREFIX);
         if (Objects.isNull(s3Objects) || CollectionUtils.isNullOrEmpty(s3Objects.getObjectSummaries())) {
             log.warn("without files to process");
             return RepeatStatus.FINISHED;

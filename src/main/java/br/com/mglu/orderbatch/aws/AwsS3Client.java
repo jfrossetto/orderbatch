@@ -2,6 +2,7 @@ package br.com.mglu.orderbatch.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,8 +15,17 @@ import java.io.InputStream;
 @Slf4j
 public class AwsS3Client {
 
+    private static final String BUCKET_NAME = "mglu-orders";
     private static final String PATH_SEPARATOR = "/";
     private final AmazonS3 amazonS3Client;
+
+    @PostConstruct
+    void createBucket() {
+        if( !amazonS3Client.doesBucketExistV2(BUCKET_NAME) ) {
+            log.info(" {} bucket created!", BUCKET_NAME);
+            amazonS3Client.createBucket(BUCKET_NAME);
+        }
+    }
 
     public S3Object getS3Object(String bucketName, String fileName) throws IOException {
         return amazonS3Client.getObject(bucketName, fileName);
