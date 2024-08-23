@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - feat/mglu-9/cicd-github-actions
 
 permissions:
   contents: write
