@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.3.2'
 	id 'io.spring.dependency-management' version '1.1.6'
+	id 'jacoco'
 }
 
 group = 'br.com.mglu'
@@ -15,6 +16,11 @@ java {
 
 repositories {
 	mavenCentral()
+}
+
+jacoco {
+	toolVersion = "0.8.12"
+	reportsDirectory = layout.buildDirectory.dir('reports/jacoco')
 }
 
 dependencies {
@@ -37,8 +43,61 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.batch:spring-batch-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testImplementation 'org.jeasy:easy-random-core:5.0.0'
+
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+test {
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+}
+
+jacocoTestReport {
+	reports {
+		xml.required = false
+		csv.required = false
+		html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+	}
+
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: ['**/*Controller.*',
+										'**/*OrderbatchApplication**',
+										'**/*S3JobConfiguration**',
+										'**/*S3JobLauncher**',
+										'**/*Repository**',
+										'**/orderbatch/aws/**'])
+		}))
+	}
+
+}
+
+jacocoTestCoverageVerification {
+
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: ['**/*Controller.*',
+										'**/*OrderbatchApplication**',
+										'**/*S3JobConfiguration**',
+										'**/*S3JobLauncher**',
+										'**/*Repository**',
+										'**/orderbatch/aws/**'])
+		}))
+	}
+
+	violationRules {
+		rule {
+			limit {
+				minimum = 0.8
+			}
+		}
+	}
+}
+check.dependsOn jacocoTestCoverageVerification

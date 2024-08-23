@@ -2,6 +2,7 @@ package br.com.mglu.orderbatch.batch;
 
 import br.com.mglu.orderbatch.aws.AwsS3Client;
 import br.com.mglu.orderbatch.textfile.ITextProcessor;
+import br.com.mglu.orderbatch.textfile.TextProcessorFactory;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.util.CollectionUtils;
@@ -28,14 +29,13 @@ public class S3Tasklet implements Tasklet {
 
     private static final String BUCKET_NAME = "mglu-orders";
     private static final String NAME_PREFIX = "data_";
-    private static final String SERVICE_SUFFIX = "Processor";
     private static final String ERROR_FOLDER = "error";
     private static final String PROCESSING_FOLDER = "processing";
     private static final String PROCESSED_FOLDER = "processed";
     private static final String NOT_INCLUDED_FOLDER = "notinclued";
 
     private final AwsS3Client s3Client;
-    private final Map<String, ITextProcessor> textProcessors;
+    private final TextProcessorFactory textProcessorFactory;
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
@@ -57,15 +57,16 @@ public class S3Tasklet implements Tasklet {
             s3Client.moveS3Object(s3Object, ERROR_FOLDER);
             return;
         }
-        ITextProcessor textProcessor = getTextProcessor(recordType);
-        if (Objects.isNull(textProcessor)) {
-            log.warn(" Processor for {} not implemented! - moved to error", recordType);
-            s3Client.moveS3Object(s3Object, ERROR_FOLDER);
-            return;
-        }
-        S3Object inProcess = s3Client.moveS3Object(s3Object, PROCESSING_FOLDER);
+        S3Object inProcess = s3Object;
         try {
-            List<String> linesNotIncluded = textProcessor.processFile(s3Object);
+            ITextProcessor textProcessor = getTextProcessor(recordType);
+            if (Objects.isNull(textProcessor)) {
+                log.warn(" Processor for {} not implemented! - moved to error", recordType);
+                s3Client.moveS3Object(s3Object, ERROR_FOLDER);
+                return;
+            }
+            inProcess = s3Client.moveS3Object(s3Object, PROCESSING_FOLDER);
+            List<String> linesNotIncluded = textProcessor.processFile(s3Object.getObjectContent());
             s3Client.moveS3Object(inProcess, PROCESSED_FOLDER);
             writeToS3LinesNotInclued(s3Object, linesNotIncluded);
         } catch (Exception e) {
@@ -84,8 +85,7 @@ public class S3Tasklet implements Tasklet {
     }
 
     private ITextProcessor getTextProcessor(String recordType) {
-        String serviceName = recordType.concat(SERVICE_SUFFIX);
-        return textProcessors.get(serviceName);
+        return textProcessorFactory.getTextProcessor(recordType);
     }
 
 }
