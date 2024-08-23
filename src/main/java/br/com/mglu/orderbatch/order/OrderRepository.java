@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.util.Collection;
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -13,7 +14,7 @@ public class OrderRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public int[][] insertUsers(Collection<User> users) {
+    public int[][] insertUsers(List<User> users) {
         return jdbcTemplate.batchUpdate(
                 "insert into users (user_id, name) values (?, ?)",
                 users,
@@ -24,7 +25,7 @@ public class OrderRepository {
                 });
     }
 
-    public int[][] insertOrders(Collection<Order> orders) {
+    public int[][] insertOrders(List<Order> orders) {
         return jdbcTemplate.batchUpdate(
                 "insert into orders (order_id, user_id, order_date) values (?, ?, ?)",
                 orders,

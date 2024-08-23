@@ -14,7 +14,10 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -23,12 +26,13 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class S3Tasklet implements Tasklet {
 
-    private static final int DELAY = 5000;
     private static final String BUCKET_NAME = "mglu-orders";
+    private static final String NAME_PREFIX = "data_";
     private static final String SERVICE_SUFFIX = "Processor";
     private static final String ERROR_FOLDER = "error";
     private static final String PROCESSING_FOLDER = "processing";
     private static final String PROCESSED_FOLDER = "processed";
+    private static final String NOT_INCLUDED_FOLDER = "notinclued";
 
     private final AwsS3Client s3Client;
     private final Map<String, ITextProcessor> textProcessors;
@@ -36,7 +40,7 @@ public class S3Tasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
         log.info(">>> orderTasklet");
-        ListObjectsV2Result s3Objects = s3Client.getListObjects(BUCKET_NAME, "data");
+        ListObjectsV2Result s3Objects = s3Client.getListObjects(BUCKET_NAME, NAME_PREFIX);
         if (Objects.isNull(s3Objects) || CollectionUtils.isNullOrEmpty(s3Objects.getObjectSummaries())) {
             log.warn("without files to process");
             return RepeatStatus.FINISHED;
@@ -60,13 +64,23 @@ public class S3Tasklet implements Tasklet {
             return;
         }
         S3Object inProcess = s3Client.moveS3Object(s3Object, PROCESSING_FOLDER);
-        boolean processed = textProcessor.processFile(s3Object);
-        if (!processed) {
-            log.warn("{} file not processed - moved to error", inProcess.getKey());
+        try {
+            List<String> linesNotIncluded = textProcessor.processFile(s3Object);
+            s3Client.moveS3Object(inProcess, PROCESSED_FOLDER);
+            writeToS3LinesNotInclued(s3Object, linesNotIncluded);
+        } catch (Exception e) {
+            log.error("unexpected error - file [{}] not processed - moved to error", inProcess.getKey(), e);
             s3Client.moveS3Object(inProcess, ERROR_FOLDER);
-            return;
         }
-        s3Client.moveS3Object(inProcess, PROCESSED_FOLDER);
+    }
+
+    private void writeToS3LinesNotInclued(S3Object s3Object,
+                                          List<String> linesNotIncluded) throws IOException {
+        StringBuffer linesBuffer = new StringBuffer();
+        linesNotIncluded.forEach(line -> linesBuffer.append(line).append(System.lineSeparator()));
+        byte[] bytes = linesBuffer.toString().getBytes();
+        InputStream inputStream = new ByteArrayInputStream(bytes);
+        s3Client.writeFileToS3(s3Object, NOT_INCLUDED_FOLDER, inputStream, bytes.length);
     }
 
     private ITextProcessor getTextProcessor(String recordType) {

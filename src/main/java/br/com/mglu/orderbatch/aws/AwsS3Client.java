@@ -2,19 +2,30 @@ package br.com.mglu.orderbatch.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class AwsS3Client {
 
+    private static final String BUCKET_NAME = "mglu-orders";
     private static final String PATH_SEPARATOR = "/";
     private final AmazonS3 amazonS3Client;
+
+    @PostConstruct
+    void createBucket() {
+        if( !amazonS3Client.doesBucketExistV2(BUCKET_NAME) ) {
+            log.info(" {} bucket created!", BUCKET_NAME);
+            amazonS3Client.createBucket(BUCKET_NAME);
+        }
+    }
 
     public S3Object getS3Object(String bucketName, String fileName) throws IOException {
         return amazonS3Client.getObject(bucketName, fileName);
@@ -24,8 +35,18 @@ public class AwsS3Client {
         return getS3Object(summary.getBucketName(), summary.getKey());
     }
 
-    public void writeFileToS3(String bucketName, String fileName, String fileContent) throws IOException {
-        amazonS3Client.putObject(bucketName, fileName, fileContent);
+    public void writeFileToS3(S3Object originalS3, String folder, InputStream fileContent, int length) throws IOException {
+        String key = folder
+                .concat(PATH_SEPARATOR)
+                .concat(getKeyWithoutFolder(originalS3.getKey()));
+        ObjectMetadata metadata = originalS3.getObjectMetadata();
+        metadata.setContentLength(length);
+        PutObjectRequest request = new PutObjectRequest(
+                originalS3.getBucketName(),
+                key,
+                fileContent,
+                metadata);
+        amazonS3Client.putObject(request);
     }
 
     public ListObjectsV2Result getListObjects(String bucketName, String keyPrefix) {

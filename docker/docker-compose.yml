@@ -1,0 +1,36 @@
+
+services:
+
+  dbdev:
+    image: postgres:12.7-alpine
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: dbdev
+      TZ: America/Sao_Paulo
+      PGTZ: America/Sao_Paulo
+    container_name: dbdev
+    ports:
+      - 5432:5432
+    networks:
+      - dev
+    volumes:
+      - ~/docker-volumes/postgresql/dbdev:/var/lib/postgresql/data
+      
+  localstack:
+    container_name: localstack-main
+    image: localstack/localstack:s3-latest
+    ports:
+      - 4566:4566            # LocalStack Gateway
+    networks:
+      - dev
+    environment:
+      - DEBUG=0
+    volumes:
+      - ~/docker-volumes/localstack/volume:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+      
+networks:
+  dev:
+    driver: bridge      
+

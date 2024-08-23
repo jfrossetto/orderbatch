@@ -6,7 +6,11 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.lang.reflect.RecordComponent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -21,7 +25,7 @@ public class TextRecordBuilder {
         }
         TextField textField = field.getDeclaredAnnotation(TextField.class);
         int start = textField.startAt();
-        int end = textField.endAt()+1 < record.length() ? textField.endAt()+1 : record.length();
+        int end = Math.min(textField.endAt() + 1, record.length());
         String fieldValue = record.substring(start, end);
         fieldValues.add(fieldValue);
       }
@@ -35,7 +39,7 @@ public class TextRecordBuilder {
 
   private <T extends Record> Constructor<T> getCanonicalConstructor(Class<T> type) throws NoSuchMethodException {
     Class<?>[] componentTypes = Arrays.stream(type.getRecordComponents())
-            .map(rc -> rc.getType())
+            .map(RecordComponent::getType)
             .toArray(Class<?>[]::new);
     return type.getDeclaredConstructor(componentTypes);
   }
