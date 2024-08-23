@@ -35,7 +35,7 @@ public class AwsS3Client {
         return getS3Object(summary.getBucketName(), summary.getKey());
     }
 
-    public void writeFileToS3(S3Object originalS3, String folder, InputStream fileContent, int length) throws IOException {
+    public void writeFileToS3(S3Object originalS3, String folder, InputStream fileContent, Integer length) throws IOException {
         String key = folder
                 .concat(PATH_SEPARATOR)
                 .concat(getKeyWithoutFolder(originalS3.getKey()));

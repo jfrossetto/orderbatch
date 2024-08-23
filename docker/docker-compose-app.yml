@@ -44,7 +44,7 @@ services:
         ipv4_address: 10.0.2.19
       
   orderbatch:
-    image: jfrossetto/orderbatch:latest
+    image: jfrossetto/orderbatch:001
     container_name: orderbatch
     depends_on:
       - localstack
@@ -61,7 +61,7 @@ services:
       - 10.0.2.20      
       
   orderapi:
-    image: jfrossetto/orderapi:latest
+    image: jfrossetto/orderapi:001
     container_name: orderapi
     depends_on:
       - localstack

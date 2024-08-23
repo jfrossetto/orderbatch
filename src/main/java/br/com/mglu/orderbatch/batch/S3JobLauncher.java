@@ -19,7 +19,7 @@ public class S3JobLauncher {
     private final JobLauncher jobLauncher;
     private final Job job;
 
-    @Scheduled(fixedDelay = 60000, initialDelay = 10000)
+    @Scheduled(fixedDelay = 30000, initialDelay = 10000)
     public void scheduleS3JobLauncher() throws Exception {
         log.info(">>> S3JobLauncher");
         try {

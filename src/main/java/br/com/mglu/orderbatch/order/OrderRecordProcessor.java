@@ -2,7 +2,6 @@ package br.com.mglu.orderbatch.order;
 
 import br.com.mglu.orderbatch.textfile.ITextProcessor;
 import br.com.mglu.orderbatch.textfile.TextRecordBuilder;
-import com.amazonaws.services.s3.model.S3Object;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
@@ -10,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,16 +31,16 @@ public class OrderRecordProcessor implements ITextProcessor {
 
     @Override
     @Transactional
-    public List<String> processFile(S3Object s3Object) {
-        Pair<List<String>, List<OrderRecord>> records = buildOrderRecords(s3Object);
+    public List<String> processFile(InputStream fileStream) {
+        Pair<List<String>, List<OrderRecord>> records = buildOrderRecords(fileStream);
         List<OrderRecord> orderRecords = records.getSecond();
         log.info(" orderRecords size {}", orderRecords.size());
         List<Integer> notInclued = persistOrderRecord(orderRecords);
         return buildLinesNotInclued(records.getFirst(), notInclued);
     }
 
-    private Pair<List<String>, List<OrderRecord>> buildOrderRecords(S3Object s3Object) {
-        BufferedReader newBufferedReader = new BufferedReader(new InputStreamReader(s3Object.getObjectContent()));
+    private Pair<List<String>, List<OrderRecord>> buildOrderRecords(InputStream fileStream) {
+        BufferedReader newBufferedReader = new BufferedReader(new InputStreamReader(fileStream));
         List<String> lines = newBufferedReader.lines().collect(Collectors.toList());
         List<OrderRecord> orderRecords = lines.stream()
                 .map(record -> textProcessor.buildRecord(record, OrderRecord.class))
